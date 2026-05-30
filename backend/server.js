@@ -1,20 +1,29 @@
 require("dotenv").config();
-const express = require("express");
-const cors    = require("cors");
-const helmet  = require("helmet");
+
+// Fail fast if required environment variables are absent.
+const validateEnv = require("./config/validateEnv");
+validateEnv();
+
+const express  = require("express");
+const cors     = require("cors");
+const helmet   = require("helmet");
+const mongoose = require("mongoose");
+
 const connectDB = require("./config/db");
 
 const app = express();
 
 // =========================
 // TRUST PROXY
-// Trust exactly one hop (nginx / cloud LB). "true" would allow IP spoofing.
+// Trust exactly one hop (Render's nginx / cloud LB).
+// "true" would allow X-Forwarded-For spoofing.
 // =========================
 app.set("trust proxy", 1);
 
 // =========================
 // HTTPS REDIRECT (production only)
-// Redirect plain-HTTP requests that arrive via a proxy that sets X-Forwarded-Proto.
+// Render terminates TLS at its edge and forwards HTTP internally.
+// Redirect any plain-HTTP request before it reaches application logic.
 // =========================
 if (process.env.NODE_ENV === "production") {
   app.use((req, res, next) => {
@@ -31,25 +40,27 @@ if (process.env.NODE_ENV === "production") {
 app.use(helmet());
 
 // =========================
-// CORS — allow only explicitly listed origins
+// CORS — explicitly listed origins only
 // =========================
 const allowedOrigins = process.env.CORS_ORIGIN
-  ? process.env.CORS_ORIGIN.split(",").map(o => o.trim())
+  ? process.env.CORS_ORIGIN.split(",").map((o) => o.trim())
   : [];
 
 if (process.env.NODE_ENV !== "production") {
   allowedOrigins.push("http://localhost:3000");
 }
 
-app.use(cors({
-  origin: (origin, callback) => {
-    // Allow server-to-server / health-check calls with no Origin header
-    if (!origin) return callback(null, true);
-    if (allowedOrigins.includes(origin)) return callback(null, true);
-    callback(new Error(`CORS: origin '${origin}' not allowed`));
-  },
-  credentials: true,
-}));
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      // Allow server-to-server / health-check calls that carry no Origin header.
+      if (!origin) return callback(null, true);
+      if (allowedOrigins.includes(origin)) return callback(null, true);
+      callback(new Error(`CORS: origin '${origin}' not allowed`));
+    },
+    credentials: true,
+  })
+);
 
 // =========================
 // BODY PARSING
@@ -67,8 +78,26 @@ app.use("/api/logs", logRoutes);
 
 // =========================
 // HEALTH CHECK
+// Returns 503 when the database is not connected so Render can
+// detect the fault and restart the service automatically.
 // =========================
-app.get("/health", (req, res) => res.json({ status: "ok" }));
+app.get("/health", (req, res) => {
+  const dbReady = mongoose.connection.readyState === 1;
+
+  if (!dbReady) {
+    return res.status(503).json({
+      status: "error",
+      db:     "disconnected",
+      uptime: process.uptime(),
+    });
+  }
+
+  res.json({
+    status: "ok",
+    db:     "connected",
+    uptime: process.uptime(),
+  });
+});
 
 // =========================
 // ROOT
@@ -103,14 +132,13 @@ const startServer = async () => {
     console.log(`Server started on port ${PORT} [${process.env.NODE_ENV || "development"}]`);
   });
 
-  // Graceful shutdown
+  // Graceful shutdown — Render sends SIGTERM before terminating a container.
   const shutdown = (signal) => {
     console.log(`${signal} received — shutting down gracefully`);
     server.close(() => {
       console.log("HTTP server closed");
       process.exit(0);
     });
-    // Force exit if close takes too long
     setTimeout(() => process.exit(1), 10000).unref();
   };
 

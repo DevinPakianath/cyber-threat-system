@@ -5,7 +5,9 @@ const connectDB = async () => {
 
   try {
     const conn = await mongoose.connect(process.env.MONGODB_URI, {
-      serverSelectionTimeoutMS: 5000
+      serverSelectionTimeoutMS: 10000, // tolerate Atlas cold-start (was 5000)
+      socketTimeoutMS:          45000, // drop hung sockets after 45 s
+      maxPoolSize:              10,    // one process on Render free tier needs ~10
     });
 
     console.log("MongoDB Connected ✅");
