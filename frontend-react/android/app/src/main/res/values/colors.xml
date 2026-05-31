@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- App color palette — mirrors the CSS custom properties in Dashboard.css -->
+    <color name="colorPrimary">#00ffd5</color>
+    <color name="colorPrimaryDark">#020817</color>
+    <color name="colorAccent">#00b7ff</color>
+    <color name="colorBackground">#020817</color>
+    <color name="ic_launcher_background">#020817</color>
+</resources>
