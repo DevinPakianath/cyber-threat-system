@@ -280,7 +280,30 @@ body {
   .login-split { flex-direction: column; width: 100%; min-height: unset; border-radius: 0; border: none; }
   .register-split { width: 100%; }
   .register-split .login-form-panel { width: 100%; }
-  .login-brand { padding: 36px 28px; border-right: none; border-bottom: 1px solid rgba(0,255,213,0.1); }
-  .login-form-panel { width: 100%; padding: 32px 28px; }
+
+  /* Brand panel: compact horizontal strip instead of half-screen column */
+  .login-brand {
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 18px 20px;
+    border-right: none;
+    border-bottom: 1px solid rgba(0,255,213,0.1);
+  }
+  .brand-shield { font-size: 28px; margin-bottom: 0; flex-shrink: 0; }
+  .login-brand h1 { font-size: 18px; margin-bottom: 0; }
+  .login-brand > p { display: none; }
   .brand-pills { display: none; }
+
+  /* Form panel */
+  .login-form-panel { width: 100%; padding: 24px 20px 32px; }
+  .login-form-panel h2 { font-size: 18px; }
+  .login-form-panel .form-sub { margin-bottom: 22px; }
+
+  /* Prevent iOS Safari auto-zoom on input focus (requires ≥16px) */
+  .field-input input { font-size: 16px; }
+
+  /* Success card */
+  .success-card { padding: 40px 24px; border-radius: 0; }
 }

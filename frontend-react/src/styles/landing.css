@@ -324,11 +324,31 @@
 
 /* ── RESPONSIVE ──────────────────────────────────── */
 @media (max-width: 700px) {
-  .land-nav { padding: 0 20px; }
-  .land-hero { padding: 64px 20px 48px; }
-  .land-features { padding: 64px 20px; }
+  /* Nav — show both buttons at compact size */
+  .land-nav { padding: 0 16px; gap: 8px; }
+  .land-nav-brand { font-size: 15px; }
+  .land-nav-icon { font-size: 18px; }
+  .land-nav-actions { gap: 6px; }
+  .land-nav-actions .land-btn-primary,
+  .land-nav-actions .land-btn-ghost { padding: 7px 11px; font-size: 12px; gap: 4px; }
+
+  /* Hero — less vertical padding */
+  .land-hero { padding: 48px 16px 36px; }
+  .land-hero-sub { font-size: 15px; }
+  .land-hero-cta { flex-direction: column; align-items: stretch; gap: 10px; }
+  .land-hero-cta .land-btn-lg { width: 100%; justify-content: center; }
+
+  /* Stats */
   .land-stats { flex-wrap: wrap; }
   .land-stat { min-width: 50%; border-right: none; border-bottom: 1px solid rgba(0,255,213,0.08); }
-  .land-footer { flex-direction: column; gap: 12px; text-align: center; padding: 24px 20px; }
-  .land-nav-actions .land-btn-ghost { display: none; }
+
+  /* Features */
+  .land-features { padding: 48px 16px; }
+  .land-section-sub { margin-bottom: 32px; }
+
+  /* Footer */
+  .land-footer { flex-direction: column; gap: 10px; text-align: center; padding: 20px 16px; }
+
+  /* Checklist: single column on small screens */
+  .land-checklist { flex-direction: column; align-items: flex-start; gap: 8px; max-width: 100%; padding: 0 4px; }
 }

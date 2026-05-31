@@ -794,16 +794,48 @@ body {
   .app-layout.sidebar-collapsed .main-content { margin-left: 0; }
   .sidebar { transform: translateX(-100%); transition: transform 0.28s ease, width 0.28s ease; }
   .app-layout.mobile-sidebar-open .sidebar { transform: translateX(0); }
-  .content-area { padding: 16px; }
-  .topbar { padding: 0 14px; gap: 10px; }
+  .content-area { padding: 14px; }
+  .topbar { padding: 0 12px; gap: 8px; }
+  .topbar-title { min-width: 0; overflow: hidden; }
+  .topbar-title h1 { font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .stats-row { grid-template-columns: 1fr 1fr; }
   .hamburger-btn { display: flex; }
   .btn-label { display: none; }
+
+  /* Hide "Updated Xs ago" text — keep pulsing dot only */
+  .live-indicator > span:not(.live-dot) { display: none; }
+
+  /* Logs header: stack controls below title */
+  .logs-header { flex-direction: column; align-items: stretch; gap: 10px; padding: 14px 16px; }
+  .logs-controls { flex-direction: column; align-items: stretch; gap: 8px; }
+  .logs-search { width: 100%; }
+  .logs-search input { width: 0; flex: 1; min-width: 0; }
+
+  /* Filter tabs: single scrollable row, no wrapping */
+  .filter-tabs { overflow-x: auto; -webkit-overflow-scrolling: touch; flex-wrap: nowrap; }
+  .filter-tab { flex-shrink: 0; }
+
+  /* Logs table: horizontal scroll so no columns are lost */
+  .logs-section { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .logs-table { min-width: 480px; }
+  .logs-table th { padding: 10px 10px; }
+  .logs-table td { padding: 11px 10px; }
+  .location-cell { max-width: 90px; }
+  .score-track { width: 36px; }
 }
 
 @media (max-width: 480px) {
-  .stats-row { grid-template-columns: 1fr 1fr; }
-  .stat-value { font-size: 30px; }
+  .stats-row { grid-template-columns: 1fr 1fr; gap: 10px; }
+  .stat-card { padding: 14px; }
+  .stat-value { font-size: 28px; }
+  .stat-icon-wrap { width: 34px; height: 34px; font-size: 15px; }
+  .content-area { padding: 10px; }
+
+  /* Topbar: drop subtitle on smallest screens */
+  .topbar-title p { display: none; }
+
+  /* Settings save stretches full width */
+  .settings-save-btn { align-self: stretch; justify-content: center; }
 }
 
 /* ============================================================
@@ -1198,8 +1230,14 @@ body {
 .topbar-error { color: var(--dangerous); font-size: 18px; display: flex; align-items: center; }
 
 @media (max-width: 600px) {
-  .settings-card       { flex-direction: column; }
-  .settings-info-grid  { grid-template-columns: 1fr; }
+  .settings-card       { flex-direction: column; padding: 16px; }
+  .settings-info-grid  { grid-template-columns: 1fr; gap: 14px; }
   .danger-zone         { flex-direction: column; align-items: flex-start; gap: 14px; }
+  .danger-btn          { width: 100%; justify-content: center; }
   .livefeed-toolbar    { flex-direction: column; align-items: flex-start; }
+
+  /* Feed cards: ensure IP doesn't overflow */
+  .feed-ip { flex-wrap: wrap; }
+  .feed-ip span:first-of-type { word-break: break-all; }
+  .all-clear { padding: 48px 16px; }
 }
