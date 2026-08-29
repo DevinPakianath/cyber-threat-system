@@ -4,7 +4,6 @@ import Dashboard      from "./Dashboard";
 import EmployeePortal from "./EmployeePortal";
 import Landing        from "./Landing";
 import Login          from "./Login";
-import Register       from "./Register";
 
 function getUserAuth() {
   const token = localStorage.getItem("token");
@@ -31,9 +30,8 @@ function getUserAuth() {
 
 function App() {
   const auth = getUserAuth();
-  const [isLoggedIn,   setIsLoggedIn]   = useState(auth.isValid);
-  const [showLanding,  setShowLanding]  = useState(!auth.isValid);
-  const [showRegister, setShowRegister] = useState(false);
+  const [isLoggedIn,  setIsLoggedIn]  = useState(auth.isValid);
+  const [showLanding, setShowLanding] = useState(!auth.isValid);
 
   if (isLoggedIn) {
     const currentAuth = getUserAuth();
@@ -46,18 +44,14 @@ function App() {
   if (showLanding) {
     return (
       <Landing
-        onGetStarted={() => { setShowLanding(false); setShowRegister(true); }}
+        onGetStarted={() => setShowLanding(false)}
         onSignIn={() => setShowLanding(false)}
       />
     );
   }
 
-  if (showRegister) {
-    return <Register setShowRegister={setShowRegister} />;
-  }
-
   return (
-    <Login setIsLoggedIn={setIsLoggedIn} setShowRegister={setShowRegister} />
+    <Login setIsLoggedIn={setIsLoggedIn} />
   );
 }
 

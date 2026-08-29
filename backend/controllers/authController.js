@@ -7,42 +7,15 @@ const { getLocation } = require("../services/geoService");
 const { analyzeLogin } = require("../services/threatEngine");
 
 // =========================
-// REGISTER
+// REGISTER (PUBLIC SELF-REGISTRATION DISABLED)
+// Accounts are provisioned exclusively by Administrators & Managers via /api/users
 // =========================
 const register = async (req, res) => {
-  try {
-    const { username, email, password } = req.body;
-
-    const existingUser = await User.findOne({ email });
-
-    if (existingUser) {
-      return res.status(400).json({
-        message: "User already exists ❌"
-      });
-    }
-
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    // Public self-registration ALWAYS creates employee role
-    const user = new User({
-      username,
-      email,
-      password: hashedPassword,
-      role: "employee",
-      isActive: true,
-      mustChangePassword: false
-    });
-
-    await user.save();
-
-    res.json({
-      message: "User registered successfully ✅"
-    });
-  } catch (error) {
-    console.error("register error:", error);
-    res.status(500).json({ message: "Internal server error" });
-  }
+  return res.status(403).json({
+    message: "Public self-registration is disabled. Accounts must be provisioned by an Administrator or Manager."
+  });
 };
+
 
 // =========================
 // LOGIN + CTI ANALYSIS

@@ -61,13 +61,28 @@ function LiveFeedView() {
   const [newCount,   setNewCount]   = useState(0);
   const [newIds,     setNewIds]     = useState(new Set());
   const [loading,    setLoading]    = useState(false);
-  const latestTsRef = useRef(null);
+  const [error,      setError]      = useState("");
+  const latestTsRef   = useRef(null);
+  const isFetchingRef = useRef(false);
+  const isMountedRef  = useRef(true);
+
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
 
   const fetchFeed = useCallback(async () => {
-    setLoading(true);
+    if (isFetchingRef.current) return;
+    isFetchingRef.current = true;
+    if (isMountedRef.current) setLoading(true);
+
     try {
       const res  = await API.get("/logs?limit=30");
-      const data = res.data.logs ?? res.data;
+      if (!isMountedRef.current) return;
+
+      const data = res.data.logs ?? res.data ?? [];
 
       if (latestTsRef.current && data.length > 0) {
         const fresh = data.filter(e => new Date(e.timestamp) > new Date(latestTsRef.current));
@@ -79,10 +94,16 @@ function LiveFeedView() {
 
       if (data.length > 0) latestTsRef.current = data[0].timestamp;
       setFeed(data);
-    } catch {
-      // silent — live feed shouldn't show error banner
+      setError("");
+    } catch (err) {
+      if (isMountedRef.current) {
+        setError(err.response?.data?.message || "Failed to load live feed.");
+      }
     } finally {
-      setLoading(false);
+      isFetchingRef.current = false;
+      if (isMountedRef.current) {
+        setLoading(false);
+      }
     }
   }, []);
 
@@ -133,7 +154,15 @@ function LiveFeedView() {
         </div>
       </div>
 
-      {feed.length === 0 ? (
+      {error && feed.length === 0 ? (
+        <div className="table-empty" style={{ marginTop: 40 }}>
+          <FiGlobe style={{ color: "var(--dangerous)" }} />
+          <p style={{ color: "var(--dangerous)", marginBottom: 12 }}>{error}</p>
+          <button className="icon-btn" onClick={fetchFeed} style={{ padding: "8px 16px" }}>
+            <FiRefreshCw /> Retry Connection
+          </button>
+        </div>
+      ) : feed.length === 0 ? (
         <div className="table-empty" style={{ marginTop: 40 }}>
           <FiGlobe />
           <p>No login activity yet. Waiting for events…</p>
@@ -154,3 +183,4 @@ function LiveFeedView() {
 }
 
 export default LiveFeedView;
+

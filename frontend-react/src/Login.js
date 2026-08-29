@@ -1,10 +1,10 @@
 import React, { useState } from "react";
-import { FiShield, FiMail, FiLock, FiLogIn, FiZap, FiEye, FiGlobe } from "react-icons/fi";
+import { FiShield, FiMail, FiLock, FiLogIn, FiZap, FiEye, FiGlobe, FiAlertTriangle } from "react-icons/fi";
 
 import API from "./services/api";
 import "./styles/login.css";
 
-function Login({ setIsLoggedIn, setShowRegister }) {
+function Login({ setIsLoggedIn }) {
   const [email,    setEmail]    = useState("");
   const [password, setPassword] = useState("");
   const [error,    setError]    = useState("");
@@ -12,16 +12,28 @@ function Login({ setIsLoggedIn, setShowRegister }) {
 
   const handleLogin = async () => {
     setError("");
+    if (!email.trim()) {
+      setError("Please enter your email address.");
+      return;
+    }
+    if (!password) {
+      setError("Please enter your password.");
+      return;
+    }
+
     setLoading(true);
     try {
-      const res = await API.post("/auth/login", { email, password });
+      const res = await API.post("/auth/login", {
+        email: email.trim().toLowerCase(),
+        password,
+      });
       localStorage.setItem("token",    res.data.token);
       localStorage.setItem("username", res.data.username);
       localStorage.setItem("email",    res.data.email);
       localStorage.setItem("role",     res.data.role || "employee");
       setIsLoggedIn(true);
     } catch (err) {
-      setError(err.response?.data?.message || "Login failed. Please try again.");
+      setError(err.response?.data?.message || "Invalid credentials or account access issue.");
     } finally {
       setLoading(false);
     }
@@ -56,7 +68,7 @@ function Login({ setIsLoggedIn, setShowRegister }) {
         {/* ── RIGHT FORM PANEL ──────────────────── */}
         <div className="login-form-panel">
           <h2>Welcome back</h2>
-          <p className="form-sub">Sign in to your CTI dashboard</p>
+          <p className="form-sub">Sign in to your security dashboard</p>
 
           <div className="field-group">
             <div className="field-wrap">
@@ -68,8 +80,9 @@ function Login({ setIsLoggedIn, setShowRegister }) {
                   placeholder="you@example.com"
                   value={email}
                   onChange={e => setEmail(e.target.value)}
-                  onKeyDown={e => e.key === "Enter" && handleLogin()}
+                  onKeyDown={e => e.key === "Enter" && !loading && handleLogin()}
                   autoComplete="email"
+                  disabled={loading}
                 />
               </div>
             </div>
@@ -83,17 +96,18 @@ function Login({ setIsLoggedIn, setShowRegister }) {
                   placeholder="••••••••"
                   value={password}
                   onChange={e => setPassword(e.target.value)}
-                  onKeyDown={e => e.key === "Enter" && handleLogin()}
+                  onKeyDown={e => e.key === "Enter" && !loading && handleLogin()}
                   autoComplete="current-password"
+                  disabled={loading}
                 />
               </div>
             </div>
           </div>
 
           {error && (
-            <div className="login-error">
-              <FiShield />
-              {error}
+            <div className="login-error" style={{ marginTop: "12px" }}>
+              <FiAlertTriangle style={{ flexShrink: 0 }} />
+              <span>{error}</span>
             </div>
           )}
 
@@ -103,15 +117,19 @@ function Login({ setIsLoggedIn, setShowRegister }) {
             disabled={loading}
           >
             <FiLogIn />
-            {loading ? "Signing in…" : "Sign in"}
+            {loading ? "Authenticating…" : "Sign in"}
           </button>
 
-          <p className="auth-switch">
-            Don't have an account?{" "}
-            <button className="auth-link" onClick={() => setShowRegister(true)}>
-              Sign up
-            </button>
-          </p>
+          <div style={{
+            marginTop: "24px",
+            paddingTop: "16px",
+            borderTop: "1px solid rgba(255,255,255,0.06)",
+            textAlign: "center",
+            fontSize: "12px",
+            color: "#64748b"
+          }}>
+            Company Managed System · Contact your administrator for account access
+          </div>
         </div>
 
       </div>
@@ -120,3 +138,4 @@ function Login({ setIsLoggedIn, setShowRegister }) {
 }
 
 export default Login;
+

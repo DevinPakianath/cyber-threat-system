@@ -163,8 +163,8 @@ function SettingsView({ onLogout }) {
           <div className="security-info-item">
             <FiLock className="sec-icon" />
             <div>
-              <span className="sec-label">Registration Limit</span>
-              <span className="sec-value">5 accounts / hour per IP</span>
+              <span className="sec-label">Account Provisioning</span>
+              <span className="sec-value">Admin & Manager RBAC</span>
             </div>
           </div>
         </div>

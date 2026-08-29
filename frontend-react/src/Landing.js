@@ -63,8 +63,7 @@ export default function Landing({ onGetStarted, onSignIn }) {
           <span>CTI Guard</span>
         </div>
         <div className="land-nav-actions">
-          <button className="land-btn-ghost" onClick={onSignIn}>Sign in</button>
-          <button className="land-btn-primary" onClick={onGetStarted}>Get started</button>
+          <button className="land-btn-primary" onClick={onSignIn}>Sign In</button>
         </div>
       </nav>
 
@@ -82,11 +81,8 @@ export default function Landing({ onGetStarted, onSignIn }) {
           security team the visibility it needs to act — not react.
         </p>
         <div className="land-hero-cta">
-          <button className="land-btn-primary land-btn-lg" onClick={onGetStarted}>
-            Get started free <FiArrowRight />
-          </button>
-          <button className="land-btn-ghost land-btn-lg" onClick={onSignIn}>
-            Sign in to dashboard
+          <button className="land-btn-primary land-btn-lg" onClick={onSignIn}>
+            Access Dashboard <FiArrowRight />
           </button>
         </div>
 
@@ -129,12 +125,13 @@ export default function Landing({ onGetStarted, onSignIn }) {
       {/* ── CTA BANNER ── */}
       <section className="land-cta-banner">
         <FiShield className="land-cta-shield" />
-        <h2>Ready to take control of your login security?</h2>
-        <p>Create a free account and start monitoring in minutes.</p>
-        <button className="land-btn-primary land-btn-lg" onClick={onGetStarted}>
-          Create free account <FiArrowRight />
+        <h2>Enterprise Login Security & Threat Intelligence</h2>
+        <p>Real-time anomaly scoring, geolocation mapping, and zero-trust authentication analysis.</p>
+        <button className="land-btn-primary land-btn-lg" onClick={onSignIn}>
+          Sign in to CTI Guard <FiArrowRight />
         </button>
       </section>
+
 
       {/* ── FOOTER ── */}
       <footer className="land-footer">

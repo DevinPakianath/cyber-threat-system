@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import {
   FiUsers, FiUserPlus, FiSearch, FiRefreshCw, FiCheckCircle,
   FiAlertTriangle, FiShield, FiUserCheck, FiUserX, FiBriefcase,
-  FiMail, FiLock, FiX, FiCheck, FiFilter
+  FiMail, FiLock, FiX, FiCheck, FiFilter, FiKey
 } from "react-icons/fi";
 import API from "../services/api";
 
@@ -30,6 +30,12 @@ function UserManagementView({ userRole }) {
   const [isReassignModalOpen, setIsReassignModalOpen] = useState(false);
   const [reassignTargetUser, setReassignTargetUser] = useState(null);
   const [selectedManagerId, setSelectedManagerId] = useState("");
+
+  // Reset Password Modal (Admin only)
+  const [isResetPwModalOpen, setIsResetPwModalOpen] = useState(false);
+  const [resetPwTargetUser, setResetPwTargetUser] = useState(null);
+  const [resetNewPassword, setResetNewPassword] = useState("");
+  const [resetMustChange, setResetMustChange] = useState(true);
 
   const isAdmin = userRole === "admin";
   const currentUserId = localStorage.getItem("username");
@@ -137,6 +143,38 @@ function UserManagementView({ userRole }) {
       fetchUsers();
     } catch (err) {
       setError(err.response?.data?.message || "Failed to update manager assignment.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  // Handle Admin Password Reset
+  const handleResetPasswordSubmit = async (e) => {
+    e.preventDefault();
+    if (!resetPwTargetUser) return;
+    setError("");
+    setSuccessMsg("");
+
+    if (!resetNewPassword || resetNewPassword.length < 8) {
+      setError("New password must be at least 8 characters.");
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      const payload = {
+        password: resetNewPassword,
+        mustChangePassword: resetMustChange,
+      };
+      await API.put(`/users/${resetPwTargetUser._id}`, payload);
+      setSuccessMsg(`Password reset successfully for ${resetPwTargetUser.username} ✅`);
+      setIsResetPwModalOpen(false);
+      setResetPwTargetUser(null);
+      setResetNewPassword("");
+      setResetMustChange(true);
+      fetchUsers();
+    } catch (err) {
+      setError(err.response?.data?.message || "Failed to reset user password.");
     } finally {
       setSubmitting(false);
     }
@@ -480,6 +518,31 @@ function UserManagementView({ userRole }) {
                               </button>
                             )}
 
+                            {/* Reset Password (Admin only, on non-self users) */}
+                            {isAdmin && !isSelf && (
+                              <button
+                                className="icon-btn"
+                                onClick={() => {
+                                  setError("");
+                                  setSuccessMsg("");
+                                  setResetPwTargetUser(u);
+                                  setResetNewPassword("");
+                                  setResetMustChange(true);
+                                  setIsResetPwModalOpen(true);
+                                }}
+                                title="Reset User Password"
+                                style={{
+                                  padding: "6px 10px",
+                                  fontSize: "11px",
+                                  borderRadius: "6px",
+                                  color: "var(--cyan)"
+                                }}
+                              >
+                                <FiKey size={12} style={{ marginRight: "4px" }} />
+                                Reset Pw
+                              </button>
+                            )}
+
                             {/* Toggle Active / Deactivate */}
                             {!isSelf && (
                               <button
@@ -786,6 +849,107 @@ function UserManagementView({ userRole }) {
                   style={{ flex: 1, padding: "10px", borderRadius: "8px" }}
                 >
                   {submitting ? "Saving…" : "Save Assignment"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ── RESET PASSWORD MODAL (ADMIN ONLY) ── */}
+      {isResetPwModalOpen && resetPwTargetUser && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: "rgba(2, 8, 23, 0.85)",
+            backdropFilter: "blur(6px)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 999,
+            padding: "20px"
+          }}
+        >
+          <div
+            className="settings-card"
+            style={{
+              width: "100%",
+              maxWidth: "440px",
+              padding: "26px",
+              borderRadius: "16px",
+              border: "1px solid var(--border-active)",
+              boxShadow: "0 20px 40px rgba(0,0,0,0.6)"
+            }}
+          >
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                <FiKey className="sec-icon" style={{ color: "var(--cyan)" }} />
+                <h3 style={{ margin: 0, fontSize: "16px", fontWeight: "700", color: "var(--text-primary)" }}>
+                  Reset Password for {resetPwTargetUser.username}
+                </h3>
+              </div>
+              <button
+                onClick={() => setIsResetPwModalOpen(false)}
+                style={{ background: "transparent", border: "none", color: "var(--text-secondary)", cursor: "pointer", fontSize: "18px" }}
+              >
+                <FiX />
+              </button>
+            </div>
+
+            <p style={{ fontSize: "13px", color: "var(--text-secondary)", marginBottom: "16px" }}>
+              Set a temporary password for this {resetPwTargetUser.role}. The user will be required to change it upon next login.
+            </p>
+
+            <form onSubmit={handleResetPasswordSubmit}>
+              <div className="settings-field" style={{ marginBottom: "16px" }}>
+                <label>New Temporary Password (Min 8 chars)</label>
+                <div className="field-input" style={{ marginTop: "6px" }}>
+                  <FiLock />
+                  <input
+                    type="password"
+                    placeholder="••••••••"
+                    value={resetNewPassword}
+                    onChange={(e) => setResetNewPassword(e.target.value)}
+                    required
+                    minLength={8}
+                    autoFocus
+                  />
+                </div>
+              </div>
+
+              <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "20px" }}>
+                <input
+                  type="checkbox"
+                  id="mustChangePwCheckbox"
+                  checked={resetMustChange}
+                  onChange={(e) => setResetMustChange(e.target.checked)}
+                  style={{ accentColor: "var(--cyan)", cursor: "pointer" }}
+                />
+                <label htmlFor="mustChangePwCheckbox" style={{ fontSize: "12px", color: "var(--text-primary)", cursor: "pointer" }}>
+                  Require password change on next login
+                </label>
+              </div>
+
+              <div style={{ display: "flex", gap: "10px" }}>
+                <button
+                  type="button"
+                  className="icon-btn"
+                  onClick={() => setIsResetPwModalOpen(false)}
+                  style={{ flex: 1, padding: "10px", borderRadius: "8px" }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="settings-save-btn"
+                  disabled={submitting || resetNewPassword.length < 8}
+                  style={{ flex: 1, padding: "10px", borderRadius: "8px" }}
+                >
+                  {submitting ? "Resetting…" : "Reset Password"}
                 </button>
               </div>
             </form>
