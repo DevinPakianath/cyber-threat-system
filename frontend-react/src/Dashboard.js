@@ -1,14 +1,15 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { FiRefreshCw, FiAlertTriangle, FiMenu } from "react-icons/fi";
 
-import API           from "./services/api";
-import Sidebar       from "./components/Sidebar";
-import LiveIndicator from "./components/LiveIndicator";
+import API                from "./services/api";
+import Sidebar            from "./components/Sidebar";
+import LiveIndicator      from "./components/LiveIndicator";
 
-import OverviewView  from "./views/OverviewView";
-import ThreatsView   from "./views/ThreatsView";
-import LiveFeedView  from "./views/LiveFeedView";
-import SettingsView  from "./views/SettingsView";
+import OverviewView       from "./views/OverviewView";
+import ThreatsView        from "./views/ThreatsView";
+import LiveFeedView       from "./views/LiveFeedView";
+import UserManagementView from "./views/UserManagementView";
+import SettingsView       from "./views/SettingsView";
 
 import "./styles/Dashboard.css";
 
@@ -16,10 +17,11 @@ const VIEW_META = {
   overview: { title: "Overview",        subtitle: "Real-time login threat intelligence" },
   threats:  { title: "Threat Analysis", subtitle: "Suspicious and dangerous login activity" },
   livefeed: { title: "Live Feed",       subtitle: "Real-time login activity stream" },
+  users:    { title: "User Directory",  subtitle: "Manage accounts, teams, and access" },
   settings: { title: "Settings",        subtitle: "Account and security preferences" },
 };
 
-function Dashboard({ setIsLoggedIn }) {
+function Dashboard({ setIsLoggedIn, userRole: initialRole }) {
   const [logs,          setLogs]         = useState([]);
   const [error,         setError]        = useState("");
   const [loading,       setLoading]      = useState(false);
@@ -28,18 +30,21 @@ function Dashboard({ setIsLoggedIn }) {
   const [activeView,    setActiveView]   = useState("overview");
   const [mobileOpen,    setMobileOpen]   = useState(false);
 
+  const role       = initialRole || localStorage.getItem("role") || "employee";
   const username   = localStorage.getItem("username") || "User";
-  const meta       = VIEW_META[activeView];
+  const meta       = VIEW_META[activeView] || VIEW_META.overview;
   const showRefresh = activeView === "overview" || activeView === "threats";
 
   const logout = useCallback(() => {
     localStorage.removeItem("token");
     localStorage.removeItem("username");
     localStorage.removeItem("email");
+    localStorage.removeItem("role");
     setIsLoggedIn(false);
   }, [setIsLoggedIn]);
 
   const fetchLogs = useCallback(async () => {
+    if (role === "employee") return;
     setError("");
     setLoading(true);
     try {
@@ -48,13 +53,32 @@ function Dashboard({ setIsLoggedIn }) {
       setLastUpdated(Date.now());
     } catch (err) {
       if (err.response?.status === 401) logout();
+      else if (err.response?.status === 403) setError("Access restricted for this account.");
       else setError("Failed to load logs. Please try refreshing.");
     } finally {
       setLoading(false);
     }
-  }, [logout]);
+  }, [logout, role]);
 
-  useEffect(() => { fetchLogs(); }, [fetchLogs]);
+  useEffect(() => {
+    if (role !== "employee") {
+      fetchLogs();
+    }
+  }, [fetchLogs, role]);
+
+  if (role === "employee") {
+    return (
+      <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", backgroundColor: "#020817", color: "#f8fafc" }}>
+        <div style={{ textAlign: "center", maxWidth: "400px", padding: "32px" }}>
+          <h2>Access Restricted</h2>
+          <p style={{ color: "#94a3b8", marginTop: "8px" }}>Employee accounts cannot access the CTI security dashboard.</p>
+          <button onClick={logout} style={{ marginTop: "20px", padding: "10px 20px", borderRadius: "8px", border: "none", backgroundColor: "#ef4444", color: "#fff", cursor: "pointer", fontWeight: "700" }}>
+            Sign Out
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   const navigate = (view) => {
     setActiveView(view);
@@ -78,6 +102,7 @@ function Dashboard({ setIsLoggedIn }) {
         activeView={activeView}
         onLogout={logout}
         dangerousCount={dangerous}
+        userRole={role}
       />
 
       <div className="main-content">
@@ -133,6 +158,7 @@ function Dashboard({ setIsLoggedIn }) {
           {activeView === "overview" && <OverviewView logs={logs} error={error} />}
           {activeView === "threats"  && <ThreatsView  logs={logs} />}
           {activeView === "livefeed" && <LiveFeedView />}
+          {activeView === "users"    && <UserManagementView userRole={role} />}
           {activeView === "settings" && <SettingsView onLogout={logout} />}
         </div>
 

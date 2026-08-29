@@ -20,6 +20,24 @@ const UserSchema = new mongoose.Schema(
       type: String,
       required: true
     },
+    role: {
+      type: String,
+      enum: ["admin", "manager", "employee"],
+      default: "employee"
+    },
+    managerId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null
+    },
+    isActive: {
+      type: Boolean,
+      default: true
+    },
+    mustChangePassword: {
+      type: Boolean,
+      default: false
+    },
 
     // Behaviour profiling — updated on each successful login
     usualLoginHours: [Number],

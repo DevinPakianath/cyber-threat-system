@@ -10,27 +10,27 @@ const { analyzeLogin } = require("../services/threatEngine");
 // REGISTER
 // =========================
 const register = async (req, res) => {
-
   try {
-
     const { username, email, password } = req.body;
 
     const existingUser = await User.findOne({ email });
 
     if (existingUser) {
-
       return res.status(400).json({
         message: "User already exists ❌"
       });
-
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
+    // Public self-registration ALWAYS creates employee role
     const user = new User({
       username,
       email,
-      password: hashedPassword
+      password: hashedPassword,
+      role: "employee",
+      isActive: true,
+      mustChangePassword: false
     });
 
     await user.save();
@@ -38,43 +38,37 @@ const register = async (req, res) => {
     res.json({
       message: "User registered successfully ✅"
     });
-
   } catch (error) {
     console.error("register error:", error);
     res.status(500).json({ message: "Internal server error" });
   }
-
 };
 
 // =========================
 // LOGIN + CTI ANALYSIS
 // =========================
 const login = async (req, res) => {
-
   try {
-
     const { email, password } = req.body;
 
     // =========================
     // GET REAL IP
     // =========================
-    let ip =
+    let rawIp =
       req.headers["x-forwarded-for"] ||
       req.socket.remoteAddress ||
       req.ip ||
       "Unknown";
 
+    let ip = rawIp.split(",")[0].trim();
+
     // CLEAN IPV6
     if (ip === "::1") {
-
       ip = "127.0.0.1";
-
     }
 
     if (ip.includes("::ffff:")) {
-
       ip = ip.replace("::ffff:", "");
-
     }
 
     // =========================
@@ -91,29 +85,28 @@ const login = async (req, res) => {
     // USER NOT FOUND
     // =========================
     if (!user) {
-
       await LoginLog.create({
-
         userId: null,
-
         timestamp: new Date(),
-
         ip,
-
         location,
-
         loginStatus: "failed",
-
         riskStatus: "Dangerous",
-
         riskScore: 50
-
       });
 
       return res.status(400).json({
         message: "Invalid credentials ❌"
       });
+    }
 
+    // =========================
+    // CHECK ACCOUNT ACTIVE STATUS
+    // =========================
+    if (user.isActive === false) {
+      return res.status(403).json({
+        message: "Account is deactivated. Please contact your administrator."
+      });
     }
 
     // =========================
@@ -132,51 +125,51 @@ const login = async (req, res) => {
     // =========================
     const { riskScore, status } =
       await analyzeLogin(
-
         user._id,
         ip,
         new Date(),
         currentStatus
-
       );
 
     // =========================
     // SAVE LOGIN LOG
     // =========================
     await LoginLog.create({
-
       userId: user._id,
-
       timestamp: new Date(),
-
       ip,
-
       location,
-
       loginStatus: currentStatus,
-
       riskStatus: status,
-
       riskScore
-
     });
 
     // =========================
     // WRONG PASSWORD
     // =========================
     if (!isMatch) {
-
       return res.status(400).json({
         message: "Invalid credentials ❌"
       });
-
     }
 
     // =========================
-    // ISSUE JWT
+    // RESOLVE ROLE & FLAGS (Safe fallback for existing database records)
+    // =========================
+    const role = user.role || "employee";
+    const mustChangePassword = Boolean(user.mustChangePassword);
+
+    // =========================
+    // ISSUE JWT (Includes id, email, username, role, mustChangePassword)
     // =========================
     const token = jwt.sign(
-      { id: user._id, email: user.email, username: user.username },
+      {
+        id: user._id,
+        email: user.email,
+        username: user.username,
+        role,
+        mustChangePassword
+      },
       process.env.JWT_SECRET,
       { expiresIn: process.env.JWT_EXPIRES_IN || "24h" }
     );
@@ -185,22 +178,17 @@ const login = async (req, res) => {
     // SUCCESS
     // =========================
     res.json({
-
       message: "Login successful ✅",
-
       token,
-
       username: user.username,
-
-      email: user.email
-
+      email: user.email,
+      role,
+      mustChangePassword
     });
-
   } catch (error) {
     console.error("login error:", error);
     res.status(500).json({ message: "Internal server error" });
   }
-
 };
 
 // =========================
@@ -221,6 +209,7 @@ const changePassword = async (req, res) => {
     if (!isMatch) return res.status(400).json({ message: "Current password is incorrect ❌" });
 
     user.password = await bcrypt.hash(newPassword, 10);
+    user.mustChangePassword = false;
     await user.save();
 
     res.json({ message: "Password updated successfully ✅" });
@@ -234,9 +223,7 @@ const changePassword = async (req, res) => {
 // EXPORT
 // =========================
 module.exports = {
-
   register,
   login,
   changePassword
-
 };

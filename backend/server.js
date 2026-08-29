@@ -72,9 +72,11 @@ app.use(express.json({ limit: "16kb" }));
 // =========================
 const authRoutes = require("./routes/authRoutes");
 const logRoutes  = require("./routes/logRoutes");
+const userRoutes = require("./routes/userRoutes");
 
 app.use("/api/auth", authRoutes);
 app.use("/api/logs", logRoutes);
+app.use("/api/users", userRoutes);
 
 // =========================
 // HEALTH CHECK

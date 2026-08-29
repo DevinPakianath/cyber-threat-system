@@ -18,6 +18,7 @@ function Login({ setIsLoggedIn, setShowRegister }) {
       localStorage.setItem("token",    res.data.token);
       localStorage.setItem("username", res.data.username);
       localStorage.setItem("email",    res.data.email);
+      localStorage.setItem("role",     res.data.role || "employee");
       setIsLoggedIn(true);
     } catch (err) {
       setError(err.response?.data?.message || "Login failed. Please try again.");

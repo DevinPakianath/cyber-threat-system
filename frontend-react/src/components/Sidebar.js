@@ -1,17 +1,26 @@
 import React from "react";
 import {
   FiShield, FiHome, FiActivity, FiAlertTriangle,
-  FiSettings, FiLogOut, FiMenu, FiX
+  FiUsers, FiSettings, FiLogOut, FiMenu, FiX
 } from "react-icons/fi";
 
-const NAV_ITEMS = [
-  { id: "overview",  icon: FiHome,          label: "Overview"  },
-  { id: "threats",   icon: FiAlertTriangle, label: "Threats"   },
-  { id: "livefeed",  icon: FiActivity,      label: "Live Feed" },
-  { id: "settings",  icon: FiSettings,      label: "Settings"  },
-];
+function Sidebar({ collapsed, onToggle, onNavigate, activeView, onLogout, dangerousCount, userRole }) {
+  const role = userRole || localStorage.getItem("role") || "employee";
 
-function Sidebar({ collapsed, onToggle, onNavigate, activeView, onLogout, dangerousCount }) {
+  const navItems = [
+    { id: "overview", icon: FiHome, label: "Overview" },
+    { id: "threats", icon: FiAlertTriangle, label: "Threats" },
+    { id: "livefeed", icon: FiActivity, label: "Live Feed" },
+  ];
+
+  if (role === "admin") {
+    navItems.push({ id: "users", icon: FiUsers, label: "User Management" });
+  } else if (role === "manager") {
+    navItems.push({ id: "users", icon: FiUsers, label: "Team Members" });
+  }
+
+  navItems.push({ id: "settings", icon: FiSettings, label: "Settings" });
+
   return (
     <aside className="sidebar">
 
@@ -32,7 +41,7 @@ function Sidebar({ collapsed, onToggle, onNavigate, activeView, onLogout, danger
       <nav className="sidebar-nav">
         {!collapsed && <span className="nav-section-label">Navigation</span>}
 
-        {NAV_ITEMS.map(item => {
+        {navItems.map(item => {
           const badge = item.id === "threats" && dangerousCount > 0 ? dangerousCount : null;
           return (
             <button
